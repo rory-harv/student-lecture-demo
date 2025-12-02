@@ -1,36 +1,54 @@
 
-# octree implementation 
-
 import numpy as np
-from typing import List
-
-class OctNode(object):
-
-    def __init__(self, pos, size, depth, data):
-
-        self.pos = pos  # position
-        self.size = size    
-        self.depth = depth  
-        self.isLeafNode = True  # initializes all nodes as leaves first
-        self.data = data    # stored data
-        self.branches = []  
-
-        half = size / 2     # store half value for computations 
-
-        # create a bounding box for a octree cube
-        self.lower = (pos[0] - half, pos[1] - half, pos[2] - half)   # lower bound of bounding box
-        self.upper = (pos[0] + half, pos[1] + half, pos[2] + half)   # upper bound of bounding box
+from Pylette import extract_colors
+from PIL import Image
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 
 
-class Octree(object):
+"""Octree creation."""
 
-    def __init__(self, worldSize, origin=(0, 0, 0), max_type="nodes", max_value=10):
+octree = oct.Octree(max_depth=4)
 
-        # creates the root bounding cube for the octree
 
-        self.root = OctNode(origin, worldSize, 0, [])   # creates the root as an initialized leaf node
-        self.worldSize = worldSize  # size of 3d world space
-        self.limit_nodes = (max_type=="nodes")  # max nodes so nothing subdivides
-        self.limit = max_value  # max value of node
+
+
+
+
+# 1. Load the image (replace 'image.jpg' with your image path)
+# You can use PIL to load the image if needed, but pylette can also take a path string
+image_path = 'image.jpg'
+
+# 2. Extract the color palette
+# Use the extract_colors function, specifying the desired palette size (e.g., 5 colors)
+# You can also specify the mode (KMeans or MedianCut) and colorspace (RGB, HSV, HLS)
+palette = extract_colors(image=image_path, palette_size=5, mode='KMeans')
+
+# 3. Access and display the extracted colors
+print(f"Extracted {len(palette.colors)} colors:")
+for color in palette.colors:
+    print(f"  RGB: {color.rgb}, Hex: {color.hex}, Frequency: {color.freq:.2%}")
+
+# 4. (Optional) Display the palette visually
+# This requires matplotlib
+def display_palette(palette):
+    fig, ax = plt.subplots(1, 1, figsize=(10, 2))
+    # Sort colors by frequency for a consistent display
+    sorted_colors = sorted(palette.colors, key=lambda c: c.freq, reverse=True)
+    
+    for i, color in enumerate(sorted_colors):
+        # Create a rectangle for each color
+        rect = patches.Rectangle((i / len(sorted_colors), 0), 1 / len(sorted_colors), 1, color=color.hex)
+        ax.add_patch(rect)
+
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.set_title("Extracted Color Palette")
+    plt.show()
+
+# Uncomment the line below to display the palette
+# display_palette(palette)
 
 
