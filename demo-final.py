@@ -6,12 +6,12 @@ MAX_POINTS = 50000
 
 def create_color_palette_with_octree(image_path, max_depth):
     img = Image.open(image_path).convert('RGB') # load image and convert to rgb
-    img_np = np.array(img) / 255.0 # normalize for open3d color representation
 
     if DOWNSAMPLE_FACTOR > 1:   # downsize the image to decrease runtime
         new_size = (img.width // DOWNSAMPLE_FACTOR, img.height // DOWNSAMPLE_FACTOR)
         img = img.resize(new_size, Image.LANCZOS)
 
+    img_np = np.array(img) / 255.0 # normalize for open3d color representation
     points = img_np.reshape(-1, 3)  # reshape pixels into an nx3 array --- n points & 3 color channels
 
     if len(points) > MAX_POINTS:    # downsizeimage to decrease runtime
@@ -25,32 +25,23 @@ def create_color_palette_with_octree(image_path, max_depth):
     octree = o3d.geometry.Octree(max_depth=max_depth)   # build an octree object
     octree.convert_from_point_cloud(pcd, size_expand=0.01)  # convert from pointcloud
 
-    # 4. Traverse the Octree and collect colors
     palette_colors = []
     
-    # Define a callback function for traversal
-    def collect_colors_callback(node, node_info):
-        #if isinstance(node, o3d.geometry.OctreeColorLeafNode):
-            # Colors are stored as float [0, 1] in Open3D
-        color = np.asarray(node.color) 
-        palette_colors.append(tuple(color))
-        return False # Continue traversal
+    visited_nodes = set()
+    
+    for point in points:  # loops through sampled points
+        leaf_node, node_info = octree.locate_leaf_node(point)   # finds a leaf node
+        node_id = id(leaf_node)  # use object id to track uniqueness
+        
+        if node_id not in visited_nodes:    # the point here represents the color
+            palette_colors.append(tuple(point * 255))  # convert back to 0-255
+            visited_nodes.add(node_id)
 
-    leaf_nodes = []
-    for point in pcd.points:
-        leaf_node, node_info = octree.locate_leaf_node(point)
-        if leaf_node not in leaf_nodes:
-            collect_colors_callback(leaf_node, node_info)
-            leaf_nodes.append(leaf_node)
+    unique_colors = list(dict.fromkeys(palette_colors)) # remove duplicates while preserving order
 
-    #unique_colors = list(set(palette_colors)) 
-    unique_colors = []
-    for color in palette_colors:    # remove duplicate colors from the list
-        if color not in unique_colors:
-            unique_colors.append(color)
     return unique_colors
 
-# Usage example
+
 
 if __name__ == '__main__':
     palette = create_color_palette_with_octree("applecat.JPG", max_depth=5)
