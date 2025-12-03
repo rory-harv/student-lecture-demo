@@ -47,7 +47,7 @@ def create_color_palette_with_octree(image_path, max_depth):
 
 
 if __name__ == '__main__':
-    palette = create_color_palette_with_octree("applecat.JPG", max_depth=5)
+    palette = create_color_palette_with_octree("applecat.JPG", max_depth = 5)
     print(f"Generated palette with {len(palette)} colors:")
     color_list = []
     for color in palette:
